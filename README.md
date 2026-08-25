@@ -132,20 +132,47 @@ interactiva y `python-dotenv` para el manejo seguro de la API key.
 
 **Técnicas de prompting utilizadas y justificación:**
 
-- **Role Prompting**: el prompt de sistema fija el rol de "historiador + redactor de contenido
-  educativo", lo que mejora la precisión histórica y evita un tono genérico de blog.
-- **Few-Shot Prompting**: se incluye un ejemplo completo (tema → raíz colonial → texto final) que
-  ancla el formato y la extensión esperada, reduciendo la necesidad de corrección manual entre
-  piezas.
-- **Salida estructurada (JSON mode)**: permite fusionar en una sola llamada lo que en la
-  Preentrega 1 eran dos etapas separadas, y consumir la respuesta directamente en código sin
-  parseo frágil de texto libre.
+- **Role Prompting**: el componente `<rol>` del prompt maestro fija el rol de "historiador +
+  redactor de contenido educativo", lo que mejora la precisión histórica y evita un tono genérico
+  de blog.
+- **Few-Shot Prompting**: el componente `<ejemplo>` incluye un caso completo (tema → raíz colonial
+  → texto final) que ancla el formato y la extensión esperada, reduciendo la necesidad de
+  corrección manual entre piezas.
+- **Salida estructurada (JSON mode)**: el componente `<formato_salida>` permite fusionar en una
+  sola llamada lo que en la Preentrega 1 eran dos etapas separadas, y consumir la respuesta
+  directamente en código sin parseo frágil de texto libre.
 - **Zero-Shot Prompting**: usado en la función de revisión de sensibilidad, una tarea de
   verificación puntual que no se beneficia de ejemplos adicionales y donde agregarlos solo
   aumentaría el costo sin mejorar el resultado.
-- **Prompting negativo (restricciones explícitas)**: se listan explícitamente las cosas a evitar
-  (mezclar raíces coloniales, estereotipos visuales, tono acusatorio), más eficaz que describir
-  solo lo que sí se quiere obtener.
+- **Prompting negativo (restricciones explícitas)**: el componente `<restricciones>` lista
+  explícitamente las cosas a evitar (mezclar raíces coloniales, estereotipos visuales, tono
+  acusatorio), más eficaz que describir solo lo que sí se quiere obtener.
+- **Prompt estructurado con etiquetas (XML)**: el prompt maestro completo se organiza en bloques
+  etiquetados (`<rol>`, `<contexto>`, `<reglas>`, `<restricciones>`, `<formato_salida>`) en lugar
+  de un párrafo corrido, lo que reduce la ambigüedad para el modelo y facilita mantener o editar
+  cada componente por separado.
+
+### Ejemplo de resultado esperado
+
+Para dejar demostrada la relación `prompt → salida → objetivo`, este es el resultado esperado
+para la pieza del tema "apellido" (el mismo usado como Few-Shot en el prompt maestro):
+
+| Campo de salida | Valor esperado | Objetivo que cumple |
+|---|---|---|
+| `texto` | "Cambiar de apellido o esconder el pueblo de origen para 'encajar' en la ciudad no es casualidad. [...] ¿Alguna vez sentiste que tu apellido o tu acento decían más de vos de lo que quisiste?" | Situación cotidiana + raíz colonial + pregunta reflexiva, en ≤80 palabras, tono no acusatorio. |
+| `raiz_colonial` | "sistema de castas indígena" | Permite verificar por código que no se mezcló con la raíz esclavista. |
+| `prompt_imagen` | "Ilustracion digital conceptual [...] Evitar estereotipos caricaturescos de rasgos indigenas." | Prompt reutilizable en la herramienta de imagen, sin una nueva llamada a un modelo de texto. |
+
+### Indicadores de validación
+
+Cada iteración de una pieza se valida contra estos indicadores antes de darla por aprobada:
+
+| Indicador | Cómo se verifica |
+|---|---|
+| **Precisión histórica** | La `raiz_colonial` devuelta coincide con la definida en `TEMAS` para ese tema (verificación automática, función `validar_pieza()`). |
+| **Adecuación al límite de palabras** | El campo `texto` no supera las 80 palabras pedidas (verificación automática, `validar_pieza()`). |
+| **Accesibilidad del lenguaje** | Se revisa con la función `review_piece()` (Zero-Shot), que señala lenguaje poco accesible. |
+| **Ausencia de estereotipos** | El `prompt_imagen` no describe personas reales ni rasgos caricaturescos; se revisa manualmente antes de generar la imagen. |
 
 ## Implementación
 
@@ -198,6 +225,18 @@ forma real (Secciones 7, 8 o 9).
 
 Aplicar Fast Prompting sobre la propuesta de la Preentrega 1 permitió reducir a la mitad el número
 de consultas necesarias por pieza, aumentar la consistencia del formato entre las cinco piezas
-gracias al ejemplo Few-Shot, y separar por completo el desarrollo del costo gracias al modo demo:
-todo el pipeline pudo construirse y probarse sin gastar créditos, dejando el gasto real acotado a
-una única corrida final y controlada.
+gracias al ejemplo Few-Shot, estructurar el prompt maestro con etiquetas explícitas (rol, contexto,
+reglas, restricciones, formato de salida) en vez de un párrafo corrido, y definir indicadores de
+validación concretos para cada iteración. Todo el pipeline pudo además construirse y probarse sin
+gastar créditos gracias al modo demo, dejando el gasto real acotado a una única corrida final y
+controlada.
+
+## Referencias
+
+- Kogan, L., Fuchs, R. & Lay, P. (2020). *No sabía que existía tanto racismo hasta que entré a
+  trabajar ahí: un estudio sobre discriminación en procesos de selección laboral en Lima
+  Metropolitana.* Pontificia Universidad Católica del Perú.
+- Instituto Nacional de Estadística e Informática (INEI). *Censo Nacional 2017: Perú — Perfil
+  Sociodemográfico*, primera pregunta de autoidentificación étnica.
+- OpenAI. *API Reference — Chat Completions.* https://platform.openai.com/docs/api-reference/chat
+- OpenAI. *API Reference — Images.* https://platform.openai.com/docs/api-reference/images
