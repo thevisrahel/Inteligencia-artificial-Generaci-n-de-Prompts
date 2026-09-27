@@ -1,0 +1,14 @@
+Guardar aquí las 5 imágenes generadas manualmente en Nightcafe (u otra herramienta
+gratuita), usando los prompts que imprime la Sección 8 del notebook.
+
+Nombrar cada archivo igual que la clave del tema, por ejemplo:
+
+  quechua.png
+  alisado.png
+  mejorar_raza.png
+  apellido.png
+  medios.png
+
+Después de subirlas, referenciarlas en el README.md (sección "Resultados"), reemplazando
+los placeholders "(pegar resultado real)" por el texto real y confirmando que el nombre
+de archivo de cada imagen coincide con el de esta carpeta.
