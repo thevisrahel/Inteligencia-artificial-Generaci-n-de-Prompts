@@ -282,7 +282,7 @@ modo real en esta entrega.
 git clone <URL-de-este-repositorio>
 cd espejos-coloniales
 pip install -r requirements.txt
-cp .env.example .env        # completar OPENAI_API_KEY=sk-...
+echo OPENAI_API_KEY=sk-... > .env   # crear el archivo .env con tu propia API key
 jupyter notebook Espejos_Coloniales_Final.ipynb
 ```
 
